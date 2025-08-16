@@ -1,6 +1,6 @@
 // app/(tabs)/sell.tsx
 import React, { useState } from 'react';
-import { View, Text, Image, Alert } from 'react-native';
+import { View, Text, Image, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -17,57 +17,32 @@ export default function Sell() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Chọn ảnh từ điện thoại
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission required', 'Please allow access to your photos.');
       return;
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 });
+    if (!result.canceled) setImageUri(result.assets[0].uri);
   };
 
-  // Upload ảnh lên Supabase Storage và trả về public URL
   const uploadImageAsync = async (userId: string, uri: string) => {
-    try {
-      const fileExt = uri.split('.').pop() || 'jpg';
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+    const fileExt = uri.split('.').pop() || 'jpg';
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
 
-      // Đọc file dưới dạng base64
-      const base64Data = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+    const base64Data = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    const fileBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-      // Chuyển base64 → Uint8Array (không dùng Buffer)
-      const fileBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    const { error } = await supabase.storage.from('listing-images').upload(filePath, fileBytes, {
+      contentType: `image/${fileExt}`,
+      upsert: true,
+    });
+    if (error) throw error;
 
-      const { error } = await supabase.storage
-        .from('listing-images')
-        .upload(filePath, fileBytes, {
-          contentType: `image/${fileExt}`,
-          upsert: true,
-        });
-
-      if (error) throw error;
-
-      const { data } = supabase.storage
-        .from('listing-images')
-        .getPublicUrl(filePath);
-
-      return data.publicUrl;
-    } catch (e: any) {
-      throw new Error(e.message || 'Failed to upload image');
-    }
+    const { data } = supabase.storage.from('listing-images').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const onSubmit = async () => {
@@ -78,7 +53,6 @@ export default function Sell() {
     try {
       setLoading(true);
       const imageUrl = await uploadImageAsync(session.user.id, imageUri);
-
       const { error } = await supabase.from('listings').insert({
         title,
         description: description || null,
@@ -93,7 +67,7 @@ export default function Sell() {
       setPrice('');
       setDescription('');
       setImageUri(null);
-      router.push('/(tabs)/my'); // chuyển sang My Listings
+      router.push('/(tabs)/my');
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to create listing');
     } finally {
@@ -101,7 +75,6 @@ export default function Sell() {
     }
   };
 
-  // UI nếu chưa đăng nhập
   if (!session) {
     return (
       <View style={{ flex: 1, backgroundColor: '#ecfdf5', padding: 16, justifyContent: 'center' }}>
@@ -113,25 +86,20 @@ export default function Sell() {
     );
   }
 
-  // UI khi đã đăng nhập
   return (
-    <View style={{ flex: 1, backgroundColor: '#ecfdf5', padding: 16 }}>
-      <Text style={{ color: '#065f46', fontSize: 20, fontWeight: '600', marginBottom: 8 }}>Create Listing</Text>
-
-      <FormField label="Title" value={title} onChangeText={setTitle} />
-      <FormField label="Price" value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
-      <FormField label="Description" value={description} onChangeText={setDescription} />
-
-      {imageUri ? (
-        <Image
-          source={{ uri: imageUri }}
-          style={{ width: '100%', height: 176, borderRadius: 20, marginBottom: 12 }}
-        />
-      ) : null}
-
-      <PrimaryButton title={imageUri ? 'Change image' : 'Pick image'} onPress={pickImage} />
-      <View style={{ height: 8 }} />
-      <PrimaryButton title="Submit" onPress={onSubmit} loading={loading} />
-    </View>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView style={{ flex: 1, backgroundColor: '#ecfdf5' }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <Text style={{ color: '#065f46', fontSize: 20, fontWeight: '600', marginBottom: 8 }}>Create Listing</Text>
+          <FormField label="Title" value={title} onChangeText={setTitle} />
+          <FormField label="Price" value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
+          <FormField label="Description" value={description} onChangeText={setDescription} />
+          {imageUri ? <Image source={{ uri: imageUri }} style={{ width: '100%', height: 176, borderRadius: 20, marginBottom: 12 }} /> : null}
+          <PrimaryButton title={imageUri ? 'Change image' : 'Pick image'} onPress={pickImage} />
+          <View style={{ height: 8 }} />
+          <PrimaryButton title="Submit" onPress={onSubmit} loading={loading} />
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

@@ -9,7 +9,7 @@ export default function TabsLayout() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ecfdf5' }}>
       <View style={{ padding: 8, backgroundColor: '#d1fae5' }}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#065f46' }}>
-          Eventide Market
+          Food & Beverages
         </Text>
       </View>
       <Tabs
