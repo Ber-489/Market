@@ -14,7 +14,6 @@ import { useFocusEffect, router } from "expo-router";
 import { supabase } from "@/lib/supabase";
 
 const ITEM_MARGIN = 8;
-// 2 cột: (screenWidth - 3 * margin) / 2  => chừa 2 mép + khoảng giữa
 const ITEM_WIDTH = (Dimensions.get("window").width - ITEM_MARGIN * 3) / 2;
 const PAGE_SIZE = 10;
 
@@ -23,10 +22,9 @@ export default function Market() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Trạng thái tải tách bạch để tránh flicker
-  const [initialLoading, setInitialLoading] = useState(true);   // chỉ lần đầu
-  const [refreshing, setRefreshing] = useState(false);          // kéo xuống
-  const [paginating, setPaginating] = useState(false);          // onEndReached
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [paginating, setPaginating] = useState(false);
 
   // ---- API helpers ----
   const fetchPage = useCallback(async (from: number, to: number) => {
@@ -48,21 +46,9 @@ export default function Market() {
       setPage(1);
       setHasMore(data.length === PAGE_SIZE);
     } catch (e) {
-      // Có thể log hoặc hiển thị thông báo nếu cần
+      console.error("Initial load error:", e);
     } finally {
       setInitialLoading(false);
-    }
-  }, [fetchPage]);
-
-  const refreshSilently = useCallback(async () => {
-    // Reload lại trang 1 nhưng KHÔNG làm trống dữ liệu → không flicker
-    try {
-      const data = await fetchPage(0, PAGE_SIZE - 1);
-      setItems(data);
-      setPage(1);
-      setHasMore(data.length === PAGE_SIZE);
-    } catch {
-      // ignore
     }
   }, [fetchPage]);
 
@@ -70,11 +56,11 @@ export default function Market() {
     setRefreshing(true);
     try {
       const data = await fetchPage(0, PAGE_SIZE - 1);
-      setItems(data);
+      setItems(data); // reset lại danh sách mới nhất
       setPage(1);
       setHasMore(data.length === PAGE_SIZE);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Refresh error:", e);
     } finally {
       setRefreshing(false);
     }
@@ -87,33 +73,33 @@ export default function Market() {
       const from = page * PAGE_SIZE;
       const to = (page + 1) * PAGE_SIZE - 1;
       const data = await fetchPage(from, to);
-      setItems((prev) => [...prev, ...data]);
+
+      // merge không trùng id
+      setItems((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const merged = [...prev, ...data.filter((d) => !ids.has(d.id))];
+        return merged;
+      });
+
       setPage((prev) => prev + 1);
       setHasMore(data.length === PAGE_SIZE);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Load more error:", e);
     } finally {
       setPaginating(false);
     }
   }, [page, hasMore, paginating, initialLoading, refreshing, fetchPage]);
 
   // ---- Effects ----
-  // Lần đầu mở Market
   useEffect(() => {
     loadInitial();
   }, [loadInitial]);
 
-  // Khi quay lại tab Market: refresh âm thầm (không xóa items) → không nhấp nháy
   useFocusEffect(
     useCallback(() => {
-      if (items.length === 0) {
-        // Nếu chưa có data (mới mở app), chạy luồng initial để có spinner trung tâm
-        loadInitial();
-      } else {
-        // Nếu đã có data, refresh âm thầm
-        refreshSilently();
-      }
-    }, [items.length, loadInitial, refreshSilently])
+      // chỉ refresh nhẹ khi quay lại tab
+      onRefresh();
+    }, [onRefresh])
   );
 
   // ---- Render ----
@@ -121,12 +107,17 @@ export default function Market() {
     <TouchableOpacity
       style={{
         width: ITEM_WIDTH,
-        backgroundColor: "#fff",
+backgroundColor: "#fff",
         borderRadius: 12,
         overflow: "hidden",
         marginBottom: ITEM_MARGIN,
       }}
-      onPress={() => router.push({ pathname: "/listing-detail", params: { id: item.id } })}
+      onPress={() =>
+        router.push({
+          pathname: "/listing-detail",
+          params: { id: item.id },
+        })
+      }
       activeOpacity={0.85}
     >
       {item.image_url ? (
@@ -150,18 +141,29 @@ export default function Market() {
       )}
 
       <View style={{ padding: 8 }}>
-        <Text style={{ fontWeight: "600", color: "#065f46" }} numberOfLines={1}>
+        <Text
+          style={{ fontWeight: "600", color: "#065f46" }}
+          numberOfLines={1}
+        >
           {item.title}
         </Text>
-        <Text style={{ color: "#047857", fontWeight: "bold" }}>${item.price}</Text>
+        <Text style={{ color: "#047857", fontWeight: "bold" }}>
+          ${Number(item.price).toFixed(2)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
 
-  // Spinner lần đầu (thay vì hiện "No listings found." rồi biến mất → gây nhấp nháy)
   if (initialLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#ecfdf5", alignItems: "center", justifyContent: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#ecfdf5",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator size="large" />
       </View>
     );
@@ -174,14 +176,24 @@ export default function Market() {
         numColumns={2}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
-        columnWrapperStyle={{ justifyContent: "space-between", marginBottom: ITEM_MARGIN }}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          marginBottom: ITEM_MARGIN,
+        }}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
-          // Chỉ hiện khi ĐÃ tải xong lần đầu và thật sự không có dữ liệu
           items.length === 0 ? (
-            <Text style={{ color: "#065f46", textAlign: "center", marginTop: 20 }}>
+            <Text
+              style={{
+                color: "#065f46",
+                textAlign: "center",
+                marginTop: 20,
+              }}
+            >
               No listings found.
             </Text>
           ) : null

@@ -74,6 +74,11 @@ export default function EditListing() {
     }
   };
 
+  // Thay đổi giá trị price: tự động chuyển , thành .
+  const onPriceChange = (text: string) => {
+    setPrice(text.replace(',', '.'));
+  };
+
   return (
     <>
       <Stack.Screen options={{ title: 'Edit', headerBackTitle: 'Back' }} />
@@ -89,7 +94,12 @@ export default function EditListing() {
             </Text>
 
             <FormField label="Title" value={title} onChangeText={setTitle} />
-            <FormField label="Price" value={price} onChangeText={setPrice} keyboardType="numeric" />
+            <FormField
+              label="Price"
+              value={price}
+              onChangeText={onPriceChange}
+              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'decimal-pad'}
+            />
             <FormField label="Description" value={description} onChangeText={setDescription} multiline />
 
             {imageUrl ? (

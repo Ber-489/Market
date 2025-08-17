@@ -75,6 +75,10 @@ export default function Sell() {
     }
   };
 
+  const onPriceChange = (text: string) => {
+    setPrice(text.replace(',', '.'));
+  };
+
   if (!session) {
     return (
       <View style={{ flex: 1, backgroundColor: '#ecfdf5', padding: 16, justifyContent: 'center' }}>
@@ -92,7 +96,12 @@ export default function Sell() {
         <ScrollView style={{ flex: 1, backgroundColor: '#ecfdf5' }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <Text style={{ color: '#065f46', fontSize: 20, fontWeight: '600', marginBottom: 8 }}>Create Listing</Text>
           <FormField label="Title" value={title} onChangeText={setTitle} />
-          <FormField label="Price" value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
+          <FormField
+            label="Price"
+            value={price}
+            onChangeText={onPriceChange}
+            keyboardType="decimal-pad"
+          />
           <FormField label="Description" value={description} onChangeText={setDescription} />
           {imageUri ? <Image source={{ uri: imageUri }} style={{ width: '100%', height: 176, borderRadius: 20, marginBottom: 12 }} /> : null}
           <PrimaryButton title={imageUri ? 'Change image' : 'Pick image'} onPress={pickImage} />
