@@ -1,4 +1,3 @@
-// app/(tabs)/index.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -74,7 +73,6 @@ export default function Market() {
       const to = (page + 1) * PAGE_SIZE - 1;
       const data = await fetchPage(from, to);
 
-      // merge không trùng id
       setItems((prev) => {
         const ids = new Set(prev.map((p) => p.id));
         const merged = [...prev, ...data.filter((d) => !ids.has(d.id))];
@@ -97,7 +95,6 @@ export default function Market() {
 
   useFocusEffect(
     useCallback(() => {
-      // chỉ refresh nhẹ khi quay lại tab
       onRefresh();
     }, [onRefresh])
   );

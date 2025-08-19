@@ -1,4 +1,3 @@
-// app/(tabs)/sell.tsx
 import React, { useState } from 'react';
 import { View, Text, Image, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native';
 import { router } from 'expo-router';

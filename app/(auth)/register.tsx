@@ -1,4 +1,3 @@
-// app/(auth)/register.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -39,6 +38,7 @@ export default function Register() {
         Alert.alert("Error", error.message);
       }
     } else {
+      await supabase.auth.signOut();
       Alert.alert("Success", "Account created successfully! Please log in.", [
         { text: "OK", onPress: () => router.replace("/(auth)/login") },
       ]);

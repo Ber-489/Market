@@ -1,4 +1,3 @@
-// app/edit-listing.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -74,7 +73,6 @@ export default function EditListing() {
     }
   };
 
-  // Thay đổi giá trị price: tự động chuyển , thành .
   const onPriceChange = (text: string) => {
     setPrice(text.replace(',', '.'));
   };

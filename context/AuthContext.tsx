@@ -1,4 +1,3 @@
-// context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -26,8 +25,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      // Không redirect ở đây!
-      // Chỉ cập nhật session, không gọi router.replace
     });
 
     return () => {
@@ -58,7 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
-    router.replace('/(auth)/login');
+    router.push('/(auth)/login'); 
   };
 
   return (
@@ -73,3 +70,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be inside AuthProvider');
   return ctx;
 };
+

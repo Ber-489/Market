@@ -2,15 +2,16 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text } from 'react-native';
+import { View, Image } from 'react-native';
 
 export default function TabsLayout() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ecfdf5' }}>
-      <View style={{ padding: 8, backgroundColor: '#d1fae5' }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#065f46' }}>
-          Food & Beverages
-        </Text>
+      <View style={{ padding: 8, backgroundColor: '#d1fae5', alignItems: 'center' }}>
+        <Image
+          source={require('../../assets/logo.png')}
+          style={{ width: 400, height: 60, resizeMode: 'contain' }}
+        />
       </View>
       <Tabs
         initialRouteName="index"

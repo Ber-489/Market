@@ -43,7 +43,7 @@ export default function Login() {
 
   return (
     <>
-      <Stack.Screen options={{headerBackTitle: 'Back' }} />
+      <Stack.Screen options={{headerBackTitle: 'Back', headerShown: true }} />
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: "#ecfdf5" }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

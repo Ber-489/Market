@@ -1,4 +1,3 @@
-// app/(tabs)/profile.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -15,7 +14,7 @@ import FormField from '@/components/FormField';
 import PrimaryButton from '@/components/PrimaryButton';
 
 export default function Profile() {
-  const { session, signOut } = useAuth(); // Thêm signOut ở đây
+  const { session, signOut } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -48,7 +47,7 @@ export default function Profile() {
       setLoading(true);
       const { error } = await supabase
         .from('profiles')
-        .upsert({ id: session.user.id, display_name: displayName });
+        .upsert({ id: session.user.id, display_name: displayName }); // đã fix
       if (error) throw error;
       Alert.alert('Saved', 'Profile updated');
     } catch (e: any) {
@@ -60,7 +59,7 @@ export default function Profile() {
 
   // --- Logout ---
   const logout = async () => {
-    await signOut(); // Sử dụng signOut từ context để đảm bảo điều hướng đúng
+    await signOut();
     setDisplayName('');
     setOrders([]);
   };
@@ -105,7 +104,7 @@ export default function Profile() {
         style: 'destructive',
         onPress: async () => {
           const { error } = await supabase.from('guest_orders').delete().eq('id', id);
-          if (error) {
+if (error) {
             Alert.alert('Error', error.message);
           } else {
             setOrders(prev => prev.filter(order => order.id !== id));
@@ -115,7 +114,7 @@ export default function Profile() {
     ]);
   };
 
-  // --- UI khi chưa đăng nhập ---
+  // --- UI not log in ---
   if (!session) {
     return (
       <View
@@ -148,7 +147,7 @@ export default function Profile() {
     );
   }
 
-  // --- UI khi đã đăng nhập ---
+  // --- UI log in ---
   return (
     <View style={{ flex: 1, backgroundColor: '#ecfdf5', padding: 16 }}>
       <Text style={{ color: '#065f46', fontSize: 20, fontWeight: '600' }}>
@@ -182,7 +181,7 @@ export default function Profile() {
 
       <FlatList
         data={orders}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`} // fix key trùng
         renderItem={({ item }) => (
           <View
             style={{
@@ -213,7 +212,7 @@ export default function Profile() {
               }}
             >
               {new Date(item.created_at).toLocaleString()}
-            </Text>
+</Text>
 
             <View
               style={{

@@ -13,7 +13,6 @@ export default function MyListings() {
   const { data, loading, error, refetch } = useListings(userId || undefined);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Tự refetch khi quay lại màn hình
   useFocusEffect(
     useCallback(() => {
       if (session) {
