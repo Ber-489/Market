@@ -1,6 +1,7 @@
 export type Listing = {
   id: string;
   title: string;
+  category: string;
   description: string | null;
   price: number;
   image_url: string | null;
@@ -9,7 +10,7 @@ export type Listing = {
 };
 
 export type Profile = {
-  id: string;        // equals auth user id
+  id: string;       
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;

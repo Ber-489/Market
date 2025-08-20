@@ -7,11 +7,22 @@ import FormField from '@/components/FormField';
 import PrimaryButton from '@/components/PrimaryButton';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function Sell() {
   const { session } = useAuth();
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState('');
+  const [items, setItems] = useState([
+    { label: 'Chicken', value: 'chicken' },
+    { label: 'Beef', value: 'beef' },
+    { label: 'Pork', value: 'pork' },
+    { label: 'Fish', value: 'fish' },
+    { label: 'Drinks', value: 'drinks' },
+    { label: 'Fast Foods', value: 'fast_foods' },
+  ]);
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,6 +67,7 @@ export default function Sell() {
         title,
         description: description || null,
         price: Number(price),
+        category,
         image_url: imageUrl,
         user_id: session.user.id,
       });
@@ -64,11 +76,12 @@ export default function Sell() {
       Alert.alert('Success', 'Listing created');
       setTitle('');
       setPrice('');
+      setCategory('chicken');
       setDescription('');
       setImageUri(null);
       router.push('/(tabs)/my');
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to create listing');
+Alert.alert('Error', e.message || 'Failed to create listing');
     } finally {
       setLoading(false);
     }
@@ -101,6 +114,25 @@ export default function Sell() {
             onChangeText={onPriceChange}
             keyboardType="decimal-pad"
           />
+
+          {/* Category Picker */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ color: '#065f46', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>Category</Text>
+            <DropDownPicker
+              open={open}
+              value={category}
+              items={items}
+              setOpen={setOpen}
+              setValue={setCategory}
+              setItems={setItems}
+              style={{ marginBottom: 16 }}
+              containerStyle={{ marginBottom: 16 }}
+              placeholder="Select category"
+              zIndex={1000}
+              listMode="SCROLLVIEW"
+            />
+          </View>
+
           <FormField label="Description" value={description} onChangeText={setDescription} />
           {imageUri ? <Image source={{ uri: imageUri }} style={{ width: '100%', height: 176, borderRadius: 20, marginBottom: 12 }} /> : null}
           <PrimaryButton title={imageUri ? 'Change image' : 'Pick image'} onPress={pickImage} />
